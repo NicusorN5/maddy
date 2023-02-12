@@ -127,7 +127,6 @@ protected:
     line += "\n";
   }
 
-private:
   bool isStarted;
   bool isFinished;
 }; // class CodeBlockParser

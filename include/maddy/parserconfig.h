@@ -19,10 +19,22 @@ struct ParserConfig
 {
   bool isEmphasizedParserEnabled;
   bool isHTMLWrappedInParagraph;
+  bool isSyntaxHighlightningEnabled;
+  //If true, settings from htmlPageSettings will be used.
+  bool generateEntireHTMLDocument; 
+
+  struct HTMLSettings
+  {
+    std::string Language;
+    std::string Title;
+  } htmlPageSettings;
 
   ParserConfig()
     : isEmphasizedParserEnabled(true)
     , isHTMLWrappedInParagraph(true)
+    , isSyntaxHighlightningEnabled(false)
+    , generateEntireHTMLDocument(false)
+    , htmlPageSettings({"en","Untitled"})
   {}
 }; // class ParserConfig
 

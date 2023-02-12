@@ -23,6 +23,7 @@
 #include "maddy/quoteparser.h"
 #include "maddy/tableparser.h"
 #include "maddy/unorderedlistparser.h"
+#include "maddy/highlightedcodeparser.h"
 
 // LineParser
 #include "maddy/breaklineparser.h"
@@ -82,6 +83,27 @@ public:
     std::string result = "";
     std::shared_ptr<BlockParser> currentBlockParser = nullptr;
 
+    if(this->config && this->config->generateEntireHTMLDocument)
+    {
+//Generate a simple html document that can be used for example with iframes.
+//Used HTML identation inside a header file... Could use a refactor? I could write a "HTMLDocumentGenerator" class?
+      result =
+        "<!DOCTYPE html>\n\
+<html lang =\""+this->config->htmlPageSettings.Language+"\"> \n\
+  <head>\n\
+      <title>" + this->config->htmlPageSettings.Title + "</title>\n";
+      if (this->config->isSyntaxHighlightningEnabled)
+      {
+        //Using https://highlightjs.org/ for syntax highlightning:
+        result +=
+"      <link rel = \"stylesheet\" href = \"//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css\">\n\
+      <script src = \"//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js\"></script>\n";
+      }
+      result +=
+" </head>\n\
+  <body>\n";
+    }
+    
     for (std::string line; std::getline(markdown, line);)
     {
       if (!currentBlockParser)
@@ -111,6 +133,13 @@ public:
         result += currentBlockParser->GetResult().str();
         currentBlockParser = nullptr;
       }
+    }
+
+    if(this->config && this->config->generateEntireHTMLDocument)
+    {
+      result +=
+"\n  </body>\n\
+</html>\n";
     }
 
     return result;
@@ -159,11 +188,23 @@ private:
 
     if (maddy::CodeBlockParser::IsStartingLine(line))
     {
-      parser = std::make_shared<maddy::CodeBlockParser>(
-        nullptr,
-        nullptr
-      );
+      //If syntax highlightning is not enabled, set parser to a plain CodeBlockParser
+      if(!this->config || !this->config->isSyntaxHighlightningEnabled) 
+      {
+        parser = std::make_shared<maddy::CodeBlockParser>(
+          nullptr,
+          nullptr
+        );
+      }
+      else //Otherwise, create a HighlightedCodeParser.
+      {
+        parser = std::make_shared<maddy::HighlightedCodeParser>(
+          nullptr,
+          nullptr
+        );
+      }
     }
+
     else if (maddy::HeadlineParser::IsStartingLine(line))
     {
       parser = std::make_shared<maddy::HeadlineParser>(
